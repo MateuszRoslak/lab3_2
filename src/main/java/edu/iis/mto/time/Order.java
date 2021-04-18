@@ -9,32 +9,36 @@ import java.util.List;
 public class Order {
     protected static final long VALID_HOURS = 24;
     private final List<OrderItem> items = new ArrayList<>();
-    private final Clock startClock;
+    private final Clock clock;
     private State orderState;
     private LocalDateTime localDateTime;
 
     public Order() {
         orderState = State.CREATED;
-        this.startClock = Clock.systemDefaultZone();
+        this.clock = Clock.systemDefaultZone();
     }
 
     public Order(Clock clock) {
         orderState = State.CREATED;
-        this.startClock = clock;
+        this.clock = clock;
     }
-
 
     public void addItem(OrderItem item) {
         requireState(State.CREATED, State.SUBMITTED);
+        items.add(item);
+        orderState = State.CREATED;
+    }
+
+    public void submit() {
         requireState(State.CREATED);
 
         orderState = State.SUBMITTED;
-        localDateTime = LocalDateTime.now(startClock);
+        localDateTime = LocalDateTime.now(clock);
     }
 
     public void confirm() {
         requireState(State.SUBMITTED);
-        long elapsedTime = localDateTime.until(LocalDateTime.now(startClock), ChronoUnit.HOURS);
+        long elapsedTime = localDateTime.until(LocalDateTime.now(clock), ChronoUnit.HOURS);
         if (elapsedTime > VALID_HOURS) {
             orderState = State.CANCELLED;
             throw new OrderExpiredException();
